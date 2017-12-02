@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "CPlotApp.h"
 #include "MainWindow.h"
-#include "../Graphs/Graph.h"
+#include "../Graph.h"
 #include "PlotView.h"
 #include "res/resource.h"
 

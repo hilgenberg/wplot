@@ -1,6 +1,6 @@
 #pragma once
 #include "PlotView.h"
-#include "../Graphs/Graph.h"
+#include "../Graph.h"
 
 class MainWindow : public CFrameWndEx
 {

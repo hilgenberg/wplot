@@ -39,9 +39,6 @@
     <ClInclude Include="Utility\Mutex.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphs\Graph.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Utility\Timer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -63,9 +60,6 @@
     <ClInclude Include="Graphs\GL_Context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Graphs\GL_Graph.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Graphs\GL_Image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -76,6 +70,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cnum.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Graph.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Point.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -92,16 +92,10 @@
     <ClCompile Include="Windows\stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Graphs\Graph.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Utility\Timer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Utility\ThreadMap.cc">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphs\GL_Graph.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Graphs\GL_RM.cc">
@@ -111,6 +105,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="random.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Graph.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Point.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -22,6 +22,10 @@ inline bool defined(const cnum &z){ return ::defined(z.real()) && ::defined(z.im
 using std::abs;
 using std::arg;
 inline double absq(const cnum &z){ return std::norm(z); } ///< absq(z) = re(z)^2 + im(z)^2
+inline double sp(const cnum &z, const cnum &w)
+{
+	return z.real() * w.real() + z.imag() * w.imag();
+}
 
 /// Zero test with EPSILON precision
 inline bool     isz(const cnum &z){ return fabs(z.real()) < EPSILON && fabs(z.imag()) < EPSILON; }

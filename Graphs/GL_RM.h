@@ -96,8 +96,8 @@ private:
 	struct ResourceInfo
 	{
 		GL_Handle handle;
-		bool      unused, modified;
 		unsigned  w, h;
+		bool      unused, modified;
 	};
 	std::map<GL_Resource*, std::vector<ResourceInfo>> resources;
 	std::vector<ResourceInfo> orphans;

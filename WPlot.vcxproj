@@ -255,13 +255,13 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Point.h" />
     <ClInclude Include="Utility\Timer.h" />
-    <ClInclude Include="Graphs\GL_Graph.h" />
     <ClInclude Include="cnum.h" />
     <ClInclude Include="random.h" />
     <ClInclude Include="Graphs\Matrix.h" />
     <ClInclude Include="Graphs\Vector.h" />
-    <ClInclude Include="Graphs\Graph.h" />
+    <ClInclude Include="Graph.h" />
     <ClInclude Include="Graphs\GL_Context.h" />
     <ClInclude Include="Graphs\GL_Image.h" />
     <ClInclude Include="Graphs\GL_RM.h" />
@@ -278,10 +278,10 @@
     <ClInclude Include="Windows\ViewUtil.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphs\GL_Graph.cc" />
+    <ClCompile Include="Point.cc" />
     <ClCompile Include="Utility\Timer.cpp" />
     <ClCompile Include="random.cc" />
-    <ClCompile Include="Graphs\Graph.cc" />
+    <ClCompile Include="Graph.cc" />
     <ClCompile Include="Graphs\GL_RM.cc" />
     <ClCompile Include="Graphs\GL_Util.cc" />
     <ClCompile Include="Utility\ThreadMap.cc" />

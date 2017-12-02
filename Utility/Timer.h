@@ -12,6 +12,7 @@ public:
 	void start();
 	void stop();
 	bool running() const;
+	void run(bool f) { if (running() && !f) stop(); else if (!running() && f) start(); }
 	double dt() const { return dt_; }
 	std::function<void(void)> callback;
 

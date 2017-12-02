@@ -6,7 +6,7 @@
 #include "PlotView.h"
 #include "res/resource.h"
 
-#include "../Graphs/Graph.h"
+#include "../Graph.h"
 #include "PlotView.h"
 
 #ifdef _DEBUG

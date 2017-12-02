@@ -1,3 +1,41 @@
+typedef unsigned char byte;
+void hsl(double h, double s, double l, unsigned char buf[4])
+{
+	if (s < 0.0) s = 0.0; else if (s > 1.0) s = 1.0;
+	if (l < 0.0) l = 0.0; else if (l > 1.0) l = 1.0;
+	l *= 255.0;
+	double q = l + s * (l < 127.5 ? l : 255.0 - l);
+	double p = l + l - q;
+	while (h < 0.0) ++h;
+	double ti, tr = modf(6.0*h, &ti);
+	int i = (int)ti;
+	if (tr < 0.0)
+	{
+		++tr; i += 5; // tr + i == 6h + 6 now
+		i %= 6;
+		if (i < 0) i += 6;
+	}
+	else
+	{
+		assert(i >= 0);
+		i %= 6;
+	}
+	assert(tr >= 0.0);
+	assert(i >= 0 && i < 6);
+	switch (i)
+	{
+		case 0: *buf++ = (byte)q; *buf++ = (byte)(p + (q - p) * tr); *buf++ = (byte)p; break;
+		case 1: *buf++ = (byte)(q - (q - p) * tr); *buf++ = (byte)q; *buf++ = (byte)p; break;
+		case 2: *buf++ = (byte)p; *buf++ = (byte)q; *buf++ = (byte)(p + (q - p) * tr); break;
+		case 3: *buf++ = (byte)p; *buf++ = (byte)(q - (q - p) * tr); *buf++ = (byte)q; break;
+		case 4: *buf++ = (byte)(p + (q - p) * tr); *buf++ = (byte)p; *buf++ = (byte)q; break;
+		case 5: *buf++ = (byte)q; *buf++ = (byte)p; *buf++ = (byte)(q - (q - p) * tr); break;
+	}
+
+	*buf = 255;
+}
+
+
 #if 0
 #include "GL_Util.h"
 

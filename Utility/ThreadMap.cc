@@ -35,7 +35,7 @@ void WorkUnit::start(int i)
 	//std::condition_variable foo;
 	
 	// check the items in range_below
-	if (layer->range_below != 0)
+	if (layer->below && layer->range_below != 0)
 	{
 		WorkLayer *last = layer->below;
 		int lastn = (int)last->units.size();

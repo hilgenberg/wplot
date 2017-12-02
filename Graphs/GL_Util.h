@@ -1,4 +1,7 @@
 #pragma once
+
+void hsl(double h, double s, double l, unsigned char buf[4]);
+
 #if 0
 #include "../Geometry/Vector.h"
 #include <GL/gl.h>
