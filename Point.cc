@@ -68,7 +68,8 @@ void Point::evolve(const Point *p, const int Y)
 			assert(e == 0.0);
 			assert(de == 0.0);
 
-			de = p->de + (0.9*LAPLACE(e) - p->e)*dt;
+			de = p->de + (LAPLACE(e) - p->e)*dt;
+			e += p->e;
 
 			// conserve |e| to work against rounding errors
 			cnum d = dt*de;
@@ -82,7 +83,6 @@ void Point::evolve(const Point *p, const int Y)
 			double r0 = abs(p->e), r = abs(p->e + d);
 			double dr = r - r0;
 
-			e += p->e;
 			if (abs(dr) > 1e-40 && dr > v)
 			{
 				d *= v / dr;
@@ -90,11 +90,12 @@ void Point::evolve(const Point *p, const int Y)
 			}
 			if (v > 1e-40)
 			{
+				dr /= v;
 				e += d;
-				this[ X].e -= p[ X].e * dr / v;
-				this[-X].e -= p[-X].e * dr / v;
-				this[ Y].e -= p[ Y].e * dr / v;
-				this[-Y].e -= p[-Y].e * dr / v;
+				this[ X].e -= p[ X].e * dr;
+				this[-X].e -= p[-X].e * dr;
+				this[ Y].e -= p[ Y].e * dr;
+				this[-Y].e -= p[-Y].e * dr;
 			}
 
 			break;
