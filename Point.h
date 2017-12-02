@@ -1,12 +1,13 @@
 #pragma once
 #include "cnum.h"
+#include "Graphs/Vector.h"
 
 struct Point
 {
 	static const int OVERLAP = 1; // how many neighbouring points does a point's calculation need?
 
 	cnum e, de;
-	//cnum g, dg;
+	P3d g;
 
 	inline void clear()
 	{

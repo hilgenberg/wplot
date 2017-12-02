@@ -35,6 +35,34 @@ void Point::init(double x, double y)
 	{
 		clear();
 	}
+
+	switch (3)
+	{
+		case 0: // nothing
+			g.set(0.0, 0.0, 0.0);
+			break;
+		case 1: // mass at the bottom
+			g.set(0.0, 0.0, 1.0 / (y - 2.0));
+			break;
+		case 2: // black hole
+		{
+			const double rh = .05;
+			g.set(0.0, 0.0, r < rh ? 1.0 : rh / r);
+			break;
+		}
+		case 3: // rotating black hole
+		{
+			const double rh = .05, f = r < rh ? 1.0 : rh / r;
+			g.set(f*y / r, -f*x / r, f);
+			break;
+		}
+		case 4: // only rotating
+		{
+			const double rh = .05, f = r < rh ? 1.0 : rh / r;
+			g.set(0.4*y / r, -0.4*x / r, 0.0);
+			break;
+		}
+	}
 }
 
 // p[+X], p[-Y], p[-X+Y] etc are the neighbours (Y is passed as argument)
@@ -48,6 +76,8 @@ void Point::init(double x, double y)
 #define D2(f,v)  ((p[v].f - p[0].f + p[-v].f - p[0].f) / (eps*eps))
 
 #define LAPLACE(f) ((p[X].f - p[0].f + (p[-X].f - p[0].f) + (p[Y].f - p[0].f) + (p[-Y].f - p[0].f)) / (eps*eps))
+#define LAPLACEG(f) (p[-X].f*(1.0-g.x) - p[0].f + (p[X].f*(1.0+g.x) - p[0].f)+ \
+					 (p[-Y].f*(1.0-g.y) - p[0].f) + (p[Y].f*(1.0+g.y) - p[0].f))/(eps*eps)
 
 // curl is also ok if f is 2d
 #define CURL(f) ((p[+Y].f.x-p[-Y].f.x-p[+X].f.y+p[-X].f.y)/eps)
@@ -65,15 +95,19 @@ void Point::evolve(const Point *p, const int Y)
 	{
 		case 0: // Klein-Gorden-like
 		{
-			assert(e == 0.0);
-			assert(de == 0.0);
+			g = p->g; // static gravity for now
 
-			de = p->de + (LAPLACE(e) - p->e)*dt;
+			de = p->de + dt*(LAPLACEG(e) - p->e);
+			//de = p->de + 0.1*LAPLACEG(e)*dt;
+			//de = p->de - 0.1*p->e*dt;
 			e += p->e;
 
-			// conserve |e| to work against rounding errors
-			cnum d = dt*de;
+			cnum d = dt*de*sqrt_(1.0-g.z*g.z); // one dt is already in de
 
+			#if 1
+			e += d;
+			#else
+			// conserve |e| to work against rounding errors
 			double va = abs(p[ X].e);
 			double vb = abs(p[-X].e);
 			double vc = abs(p[ Y].e);
@@ -97,7 +131,7 @@ void Point::evolve(const Point *p, const int Y)
 				this[ Y].e -= p[ Y].e * dr;
 				this[-Y].e -= p[-Y].e * dr;
 			}
-
+			#endif
 			break;
 		}
 		case 1: // Schrödinger-like

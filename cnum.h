@@ -26,6 +26,17 @@ inline double sp(const cnum &z, const cnum &w)
 {
 	return z.real() * w.real() + z.imag() * w.imag();
 }
+inline cnum sqrt_(double z)
+{
+	if (z >= 0.0)
+	{
+		return ::sqrt(z);
+	}
+	else
+	{
+		return cnum(0.0, ::sqrt(-z));
+	}
+}
 
 /// Zero test with EPSILON precision
 inline bool     isz(const cnum &z){ return fabs(z.real()) < EPSILON && fabs(z.imag()) < EPSILON; }
