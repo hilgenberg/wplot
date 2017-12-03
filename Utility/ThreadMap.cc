@@ -126,7 +126,6 @@ WorkLayer::WorkLayer(const std::string &name, Task *t, WorkLayer *down, int spac
 : name(name), task(t), below(down), above(NULL), space(space_), range_below(range_below_), offset(offset_)
 , next_todo(0), unfinished(0), cyclic(false)
 {
-	assert(range_below == 0 || below != NULL);
 	if (space < 0) space = 0;
 	
 	if (below) below->above = this;

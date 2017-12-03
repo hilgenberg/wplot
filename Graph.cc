@@ -169,7 +169,7 @@ void Graph::update() const
 	Point *ud = NULL;
 	Point *ud0 = NULL;
 
-	assert(U.size() == U0.size());
+	assert(wave->U.size() == wave->U0.size());
 
 	++frame;
 	if (frame == 0 || (int)im.w() != w || (int)im.h() != h)

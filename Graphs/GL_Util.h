@@ -1,6 +1,8 @@
 #pragma once
+#include "../cnum.h"
 
 void hsl(double h, double s, double l, unsigned char buf[4]);
+void hsl(const cnum &z, unsigned char buf[4]);
 
 #if 0
 #include "../Geometry/Vector.h"

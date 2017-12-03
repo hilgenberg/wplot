@@ -1,67 +1,93 @@
 #include "Point.h"
 #include "Graphs/GL_Util.h"
+#include "random.h"
 
-static inline double arg(double y, double x)
-{
-	double f = std::max(abs(x), abs(y));
-	if (f < 1e-40) return 0.0;
-	double a = std::min(abs(x), abs(y)) / f;
-	double s = a * a;
-	double r = ((-0.0464964749 * s + 0.15931422) * s - 0.327622764) * s * a + a;
-	if (abs(y) > abs(x)) r = M_PI_2 - r;
-	if (x < 0) r = M_PI - r;
-	if (y < 0) r = -r;
-	return r * 0.5*M_1_PI; // range [-0.5, 0.5]
-}
+//#define MAXWELL
 
 void Point::display(unsigned char pixel[4])
 {
-	double x = e.real(), y = e.imag();
-	double v = hypot(x, y);
-	hsl(arg(y, x) + 1.0, 1.0, std::min(v*0.3, 0.9), pixel);
+	hsl(e, pixel);
 }
 
+static inline double sqr(double x) { return x*x; }
 void Point::init(double x, double y)
 {
+	#ifdef MAXWELL
+	const double r = 0.13, x0 = .4;
+	if (abs(x-x0) < r && abs(y) < r)
+	{
+		double s = sin(123 * x), c = cos(123 * x);
+		double f = 1.5* M_E * exp(-1.0 / (1.0 - sqr((x-x0)/r)));
+		e = cnum(c, s) *f;
+		de = cnum(-s, c)*f;// cnum(c, s)*f;
+	}
+	else
+	{
+		clear();
+	}
+	#else
+	P2d v(38.0, 0.0);
 	double r = 2.0*(x*x + y*y);
 	if (r < 1.0)
 	{
-		double s = sin(38 * x), c = cos(38 * x);
+		double s = sin(v.x*x + v.y*y), c = cos(v.x*x + v.y*y);
 		double f = 6.0 * exp(-1.0 / (1.0 - r));
-		e  = cnum(s,  c) * f;
+		e = cnum(s, c) * f;
 		de = cnum(c, -s) * f;
 	}
 	else
 	{
 		clear();
 	}
+	#endif
 
-	switch (3)
+	init_g(x, y);
+}
+
+void Point::init_g(double x, double y)
+{
+	switch (8)
 	{
 		case 0: // nothing
 			g.set(0.0, 0.0, 0.0);
 			break;
 		case 1: // mass at the bottom
-			g.set(0.0, 0.0, 1.0 / (y - 2.0));
+			g.set(0.0, 0.0, 1.0 / sqr(y - 2.0));
 			break;
-		case 2: // black hole
+		case 2: // mass at the right
+			g.set(0.0, 0.0, 1.0 / sqr(2.0 - x));
+			break;
+		case 3: // mass at the left
+			g.set(0.0, 0.0, 1.0 / sqr(x + 2.0));
+			break;
+
+		case 4: // black hole
 		{
+			double r = 2.0*(x*x + y*y);
 			const double rh = .05;
-			g.set(0.0, 0.0, r < rh ? 1.0 : rh / r);
+			g.set(0.0, 0.0, r < rh ? 1.0 : sqr(rh / r));
 			break;
 		}
-		case 3: // rotating black hole
+		case 5: // rotating black hole
 		{
+			double r = 2.0*(x*x + y*y);
 			const double rh = .05, f = r < rh ? 1.0 : rh / r;
-			g.set(f*y / r, -f*x / r, f);
+			g.set(0.1*f*y / r, -0.1*f*x / r, f*f);
 			break;
 		}
-		case 4: // only rotating
+		case 6: // only rotating
 		{
+			double r = 2.0*(x*x + y*y);
 			const double rh = .05, f = r < rh ? 1.0 : rh / r;
-			g.set(0.4*y / r, -0.4*x / r, 0.0);
+			g.set(0.01*y / r, -0.01*x / r, 0.0);
 			break;
 		}
+		case 7: // dark energy at the bottom
+			g.set(0.0, 0.0, -1.0 / sqr(y - 2.0));
+			break;
+		case 8: // chaos
+			g.set(0.1*normal_rand(), 0.1*normal_rand(), 0.1*normal_rand());
+			break;
 	}
 }
 
@@ -88,60 +114,52 @@ void Point::init(double x, double y)
 
 void Point::evolve(const Point *p, const int Y)
 {
+	g = p->g; // static gravity for now
+	e += p->e; // start with last iteration's value (but allow neighbours to modify our e)
+
+	//de = p->de + 0.1*LAPLACEG(e)*dt;
+	//de = p->de - 0.1*p->e*dt;
+
+	#ifdef MAXWELL
 	constexpr double dt = 0.1;
 	const double eps = 1.0;// / (double)w;
+	de = p->de + dt*LAPLACEG(e);
+	#else // Klein-Gordon
+	constexpr double dt = 0.1;
+	const double eps = 1.0;// / (double)w;
+	de = p->de + dt*(LAPLACEG(e) - p->e);
+	#endif
 
-	switch (0)
+	cnum d = dt*de*sqrt_(1.0 - g.z); // one dt is already in de
+
+	#if 1
+	e += d;
+	#else
+	// conserve |e| to work against rounding errors
+	double va = abs(p[X].e);
+	double vb = abs(p[-X].e);
+	double vc = abs(p[Y].e);
+	double vd = abs(p[-Y].e);
+	double v = va + vb + vc + vd;
+
+	double r0 = abs(p->e), r = abs(p->e + d);
+	double dr = r - r0;
+
+	if (abs(dr) > 1e-40 && dr > v)
 	{
-		case 0: // Klein-Gorden-like
-		{
-			g = p->g; // static gravity for now
-
-			de = p->de + dt*(LAPLACEG(e) - p->e);
-			//de = p->de + 0.1*LAPLACEG(e)*dt;
-			//de = p->de - 0.1*p->e*dt;
-			e += p->e;
-
-			cnum d = dt*de*sqrt_(1.0-g.z*g.z); // one dt is already in de
-
-			#if 1
-			e += d;
-			#else
-			// conserve |e| to work against rounding errors
-			double va = abs(p[ X].e);
-			double vb = abs(p[-X].e);
-			double vc = abs(p[ Y].e);
-			double vd = abs(p[-Y].e);
-			double v = va + vb + vc + vd;
-
-			double r0 = abs(p->e), r = abs(p->e + d);
-			double dr = r - r0;
-
-			if (abs(dr) > 1e-40 && dr > v)
-			{
-				d *= v / dr;
-				dr = v;
-			}
-			if (v > 1e-40)
-			{
-				dr /= v;
-				e += d;
-				this[ X].e -= p[ X].e * dr;
-				this[-X].e -= p[-X].e * dr;
-				this[ Y].e -= p[ Y].e * dr;
-				this[-Y].e -= p[-Y].e * dr;
-			}
-			#endif
-			break;
-		}
-		case 1: // Schrödinger-like
-			e = p->e + dt*LAPLACE(e)*cnum(0, 1.0);
-			break;
-		case 2:
-			de = p->de + 0.01*dt*cnum(CCURL(e), CCURL(de));// (0.01*LAPLACE(e) - p->e)*dt;
-			e = p->e + p->de*dt;
-			break;
+		d *= v / dr;
+		dr = v;
 	}
+	if (v > 1e-40)
+	{
+		dr /= v;
+		e += d;
+		this[X].e -= p[X].e * dr;
+		this[-X].e -= p[-X].e * dr;
+		this[Y].e -= p[Y].e * dr;
+		this[-Y].e -= p[-Y].e * dr;
+	}
+	#endif
 
 	/*double r = abs(e);
 	if (r > 1.0) e /= r;*/

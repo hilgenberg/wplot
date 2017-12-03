@@ -234,7 +234,12 @@ void PlotView::OnKeyDown(UINT c, UINT rep, UINT flags)
 		case '6': case '7': case '8': case '9': case '0':
 		{
 			int k = (c == '0' ? 10 : c - '0');
-			ctrl ? g.timezoom(k) : g.zoom(k);
+			ctrl ? g.zoom(k) : g.timezoom(k);
+			if (!ctrl)
+			{
+				g.animate(true);
+				animating();
+			}
 			Invalidate();
 			break;
 		}

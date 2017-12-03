@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../cnum.h"
+#include "cnum.h"
 
 void     real_rand(cnum &r);
 double   real_rand();

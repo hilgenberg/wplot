@@ -1,3 +1,5 @@
+#include "GL_Util.h"
+
 typedef unsigned char byte;
 void hsl(double h, double s, double l, unsigned char buf[4])
 {
@@ -35,9 +37,28 @@ void hsl(double h, double s, double l, unsigned char buf[4])
 	*buf = 255;
 }
 
+static inline double arg(double y, double x)
+{
+	double f = std::max(abs(x), abs(y));
+	if (f < 1e-40) return 0.0;
+	double a = std::min(abs(x), abs(y)) / f;
+	double s = a * a;
+	double r = ((-0.0464964749 * s + 0.15931422) * s - 0.327622764) * s * a + a;
+	if (abs(y) > abs(x)) r = M_PI_2 - r;
+	if (x < 0) r = M_PI - r;
+	if (y < 0) r = -r;
+	return r * 0.5*M_1_PI; // range [-0.5, 0.5]
+}
+
+void hsl(const cnum &e, unsigned char pixel[4])
+{
+	double x = e.real(), y = e.imag();
+	double v = hypot(x, y);
+	hsl(arg(y, x) + 1.0, 1.0, std::min(v*0.3, 0.9), pixel);
+}
+
 
 #if 0
-#include "GL_Util.h"
 
 void draw_arrow3d(const P3f &p, const P3f &u_, float max_tip_length)
 {
