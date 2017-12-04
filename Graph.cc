@@ -253,6 +253,18 @@ void Graph::update() const
 
 			layer = new WorkLayer("prepare", &task, layer, 0, -1);
 			{
+				if (Point::MOD_OVERLAP > 0)
+				{
+					// need to clear even the borders because they will be added later
+					layer->add_unit([=]()
+					{
+						memset(ud,              0, BORDER * W * sizeof(Point));
+						memset(ud+(BORDER+h)*W, 0, BORDER * W * sizeof(Point));
+					});
+
+					// add a new layer so its striping can match the one below 
+					layer = new WorkLayer("prepare2", &task, layer, 0, -1);
+				}
 				Point *p = ud + W*BORDER;
 				for (int i = 0; i < h; i += chunk)
 				{
@@ -264,9 +276,8 @@ void Graph::update() const
 					p += W*chunk;
 				}
 			}
-
 			layer = new WorkLayer("evolve", &task, layer, space, 2*space+1, -space);
-			//layer = new WorkLayer("evolve", &task, layer, space, -1);
+			layer->set_cyclic();
 			{
 				Point *p = ud + BORDER + W*BORDER;
 				Point *p0 = ud0 + BORDER + W*BORDER;
@@ -288,6 +299,46 @@ void Graph::update() const
 					p += W*chunk;
 					p0 += W*chunk;
 				}
+			}
+
+			constexpr int m = Point::MOD_OVERLAP;
+			if (m > 0)
+			{
+				// add border modification back to their original location
+				assert(m <= BORDER);
+				layer = new WorkLayer("copy borders in U", &task, layer, 1, -1);
+				layer->add_unit([=]() // top
+				{
+					for (int i = BORDER-m; i < BORDER; ++i)
+					{
+						Point *p = ud + i*W;
+						Point *q = ud + (i+h)*W;
+						for (int j = 0; j < W; ++j) *q++ += *p++;
+					}
+				});
+
+				// layer->space == 1 => next one is executed after the others are done
+				layer->add_unit([=]() { // left and right
+					Point *p = ud + BORDER*W;
+					for (int y = 0; y < h; ++y, p += W)
+					{
+						for (int x = 0; x < m; ++x)
+						{
+							p[BORDER + x] += p[BORDER + w + x];
+							p[BORDER - 1 + w - x] += p[BORDER - 1 - x];
+						}
+					}
+				});
+
+				layer->add_unit([=]() // bottom
+				{
+					Point *p = ud + (BORDER + h)*W;
+					Point *q = ud +  BORDER*W;
+					for (int i = 0; i < m; ++i)
+					{
+						for (int j = 0; j < W; ++j) *q++ += *p++;
+					}
+				});
 			}
 		}
 
