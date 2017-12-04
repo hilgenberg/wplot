@@ -2,17 +2,38 @@
 #include "Graphs/GL_Util.h"
 #include "random.h"
 
-//#define MAXWELL
-
 void Point::display(unsigned char pixel[4])
 {
+	#ifdef DIRAC
+	hsl(e0, pixel);
+	#else
 	hsl(e, pixel);
+	#endif
 }
 
 static inline double sqr(double x) { return x*x; }
-void Point::init(double x, double y)
+void Point::init(double x, double y, double Y)
 {
-	#ifdef MAXWELL
+	#ifdef DIRAC
+
+	P2d v(180.0, 0.0);
+	double r = 2.0*(x*x + y*y);
+	if (r < 1.0)
+	{
+		double s = sin(v.x*x + v.y*y), c = cos(v.x*x + v.y*y);
+		double f = 6.0 * exp(-1.0 / (1.0 - r));
+		e0 = f*cnum(c, -s);
+		e1 = 0.0;
+		e2 = f*v.y*cnum(c, -s);
+		e3 = f*v.x*cnum(c, -s);
+	}
+	else
+	{
+		clear();
+	}
+
+	#elif defined(MAXWELL)
+	
 	const double r = 0.13, x0 = .4;
 	if (abs(x-x0) < r && abs(y) < r)
 	{
@@ -25,7 +46,9 @@ void Point::init(double x, double y)
 	{
 		clear();
 	}
+	
 	#else
+	
 	P2d v(38.0, 0.0);
 	double r = 2.0*(x*x + y*y);
 	if (r < 1.0)
@@ -39,6 +62,7 @@ void Point::init(double x, double y)
 	{
 		clear();
 	}
+	
 	#endif
 
 	init_g(x, y);
@@ -46,100 +70,112 @@ void Point::init(double x, double y)
 
 void Point::init_g(double x, double y)
 {
-	switch (8)
+	g.clear();
+	double r = std::hypot(x, y);
+	switch (1)
 	{
 		case 0: // nothing
-			g.set(0.0, 0.0, 0.0);
 			break;
 		case 1: // mass at the bottom
-			g.set(0.0, 0.0, 1.0 / sqr(y - 2.0));
+			g.z = 1.0 / (2.0 - y);
 			break;
-		case 2: // mass at the right
-			g.set(0.0, 0.0, 1.0 / sqr(2.0 - x));
+		case 2: // mass at the left
+			g.z = 1.0 / (2.0 - x); // 1/3 --> 1
 			break;
-		case 3: // mass at the left
-			g.set(0.0, 0.0, 1.0 / sqr(x + 2.0));
+		case 3: // mass at the right
+			g.z = 1.0 / (2.0 + x); // 1 --> 1/3
 			break;
 
 		case 4: // black hole
 		{
-			double r = 2.0*(x*x + y*y);
-			const double rh = .05;
-			g.set(0.0, 0.0, r < rh ? 1.0 : sqr(rh / r));
+			const double rh = .15;
+			g.z = r < rh ? 1.0 : sqr(rh / r);
 			break;
 		}
 		case 5: // rotating black hole
 		{
-			double r = 2.0*(x*x + y*y);
-			const double rh = .05, f = r < rh ? 1.0 : rh / r;
-			g.set(0.1*f*y / r, -0.1*f*x / r, f*f);
+			const double rh = .15, f = r < rh ? 1.0 : rh / r;
+			g.set(0.05*f*y / r, -0.05*f*x / r, f*f);
 			break;
 		}
 		case 6: // only rotating
 		{
-			double r = 2.0*(x*x + y*y);
-			const double rh = .05, f = r < rh ? 1.0 : rh / r;
-			g.set(0.01*y / r, -0.01*x / r, 0.0);
+			g.set(0.1*y / r, -0.1*x / r, 0.0);
 			break;
 		}
 		case 7: // dark energy at the bottom
-			g.set(0.0, 0.0, -1.0 / sqr(y - 2.0));
+			g.z = -2.0 / sqr(2.0 - y); // => sqrt(1-g00) > 1
 			break;
 		case 8: // chaos
 			g.set(0.1*normal_rand(), 0.1*normal_rand(), 0.1*normal_rand());
 			break;
+		case 9: // constant (gxx,gyy)
+			g.y = 0.4;
+			break;
 	}
+
+	// move the sqrt out of evolve() for now (though g.z > 1 could be
+	// interesting later (fix precision problems first)!)
+	g.z = sqrt(1.0 - g.z);
 }
 
-// p[+X], p[-Y], p[-X+Y] etc are the neighbours (Y is passed as argument)
-#define X 1
+// p[+dx], p[-dy], p[-dx+dy] etc are the neighbours of p[0]
+#define dx 1
+#define dy Y
 
-// differentials: first order is ambiguous
-#define DL(f,v) ((p[0].f - p[-v].f)/eps) // left side
-#define DR(f,v) ((p[v].f - p[0].f)/eps)  // right side
+// differentials, first order:
+#define D1L_(f,v) (p[0].f - p[-d##v].f) // left/lower side
+#define D1R_(f,v) (p[d##v].f - p[0].f)  // right/upper side
+#define D1L(f,v)  (D1L_(f,v)*(1.0-g.v))
+#define D1R(f,v)  (D1R_(f,v)*(1.0+g.v))
+#define D1(f,v)  ((D1L(f,v)+D1R(f,v))*0.5) // probably needs roots on the factors or something
 
-// second order is not: (DR(f,v) - DL(f,v)) / eps = 
-#define D2(f,v)  ((p[v].f - p[0].f + p[-v].f - p[0].f) / (eps*eps))
-
-#define LAPLACE(f) ((p[X].f - p[0].f + (p[-X].f - p[0].f) + (p[Y].f - p[0].f) + (p[-Y].f - p[0].f)) / (eps*eps))
-#define LAPLACEG(f) (p[-X].f*(1.0-g.x) - p[0].f + (p[X].f*(1.0+g.x) - p[0].f)+ \
-					 (p[-Y].f*(1.0-g.y) - p[0].f) + (p[Y].f*(1.0+g.y) - p[0].f))/(eps*eps)
-
-// curl is also ok if f is 2d
-#define CURL(f) ((p[+Y].f.x-p[-Y].f.x-p[+X].f.y+p[-X].f.y)/eps)
-#define CCURL(f) ((p[+Y].f.real()-p[-Y].f.real()-p[+X].f.imag()+p[-X].f.imag())/eps)
-
-// divergence is weird again, but maybe like this:
-#define DIV(f) ((p[X].f.x - p[-X].f.x + p[Y].f.y - p[-Y].f.y)/eps)
+// second order: D2 = D1R - D1L = 
+#define D2(f,v)  ((p[-d##v].f*(1.0-g.v) - p[0].f) + (p[d##v].f*(1.0+g.v) - p[0].f))
+#define LAPLACE(f) (D2(f,x)+D2(f,y))
 
 void Point::evolve(const Point *p, const int Y)
 {
-	g = p->g; // static gravity for now
-	e += p->e; // start with last iteration's value (but allow neighbours to modify our e)
+	constexpr double dt = 0.1;
+	constexpr double eps = 1.0;// / (double)w;
 
-	//de = p->de + 0.1*LAPLACEG(e)*dt;
-	//de = p->de - 0.1*p->e*dt;
+	g = p->g;  // static gravity for now
+
+	#ifdef DIRAC //---------------------------------------
+	static constexpr cnum I(0.0, 1.0);
+	double f = dt * sqrt(g.z); // first order equation
+
+	e0 += p->e0 + f*(-D1(e3, x) + ix(D1(e3, y)) - ix(p->e0));
+	e1 += p->e1 + f*(-D1(e2, x) - ix(D1(e2, y)) - ix(p->e1));
+	e2 += p->e2 + f*(-D1(e1, x) + ix(D1(e1, y)) + ix(p->e2));
+	e3 += p->e3 + f*(-D1(e0, x) - ix(D1(e0, y)) + ix(p->e3));
+
+	#else //----------------------------------------------
+
+	// start with last iteration's value (but allow
+	// neighbours to modify our e)
+	e += p->e;
 
 	#ifdef MAXWELL
-	constexpr double dt = 0.1;
-	const double eps = 1.0;// / (double)w;
-	de = p->de + dt*LAPLACEG(e);
+
+	de = p->de + dt*LAPLACE(e) / (eps*eps);
+	
 	#else // Klein-Gordon
-	constexpr double dt = 0.1;
-	const double eps = 1.0;// / (double)w;
-	de = p->de + dt*(LAPLACEG(e) - p->e);
+	
+	de = p->de + dt*(LAPLACE(e)/(eps*eps) - p->e);
+	
 	#endif
 
-	cnum d = dt*de*sqrt_(1.0 - g.z); // one dt is already in de
+	cnum d = dt*de*g.z;
 
 	#if 1
 	e += d;
 	#else
 	// conserve |e| to work against rounding errors
-	double va = abs(p[X].e);
-	double vb = abs(p[-X].e);
-	double vc = abs(p[Y].e);
-	double vd = abs(p[-Y].e);
+	double va = abs(p[ dx].e);
+	double vb = abs(p[-dx].e);
+	double vc = abs(p[ dy].e);
+	double vd = abs(p[-dy].e);
 	double v = va + vb + vc + vd;
 
 	double r0 = abs(p->e), r = abs(p->e + d);
@@ -154,12 +190,13 @@ void Point::evolve(const Point *p, const int Y)
 	{
 		dr /= v;
 		e += d;
-		this[X].e -= p[X].e * dr;
-		this[-X].e -= p[-X].e * dr;
-		this[Y].e -= p[Y].e * dr;
-		this[-Y].e -= p[-Y].e * dr;
+		this[ dx].e -= p[ dx].e * dr;
+		this[-dx].e -= p[-dx].e * dr;
+		this[ dy].e -= p[ dy].e * dr;
+		this[-dy].e -= p[-dy].e * dr;
 	}
 	#endif
+	#endif // DIRAC
 
 	/*double r = abs(e);
 	if (r > 1.0) e /= r;*/

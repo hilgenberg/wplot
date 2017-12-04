@@ -37,6 +37,8 @@ inline cnum sqrt_(double z)
 		return cnum(0.0, ::sqrt(-z));
 	}
 }
+inline cnum ix(const cnum &z) { return cnum(-z.imag(), z.real()); } // z * i
+inline cnum iu(const cnum &z) { return cnum(z.imag(), -z.real()); } // z / i
 
 /// Zero test with EPSILON precision
 inline bool     isz(const cnum &z){ return fabs(z.real()) < EPSILON && fabs(z.imag()) < EPSILON; }

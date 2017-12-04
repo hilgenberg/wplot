@@ -200,6 +200,7 @@ void Graph::update() const
 
 		layer = new WorkLayer("init", &task, NULL);
 		Point *p = ud + BORDER + W*BORDER;
+		double hr = (double)h / (double)w;
 		for (int i = 0; i < h; i += chunk)
 		{
 			int i1 = std::min(h, i + chunk);
@@ -211,7 +212,7 @@ void Graph::update() const
 					for (int j = 0; j < w; ++j, ++p)
 					{
 						double x = (double)(w - 2 * j) / (double)w;
-						p->init(x, y);
+						p->init(x, y, hr);
 					}
 					p += 2 * BORDER;
 				}
