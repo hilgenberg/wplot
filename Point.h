@@ -2,7 +2,7 @@
 #include "cnum.h"
 #include "Graphs/Vector.h"
 
-//#define DIRAC
+#define DIRAC
 //#define MAXWELL
 
 struct Point

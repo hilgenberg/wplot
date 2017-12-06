@@ -16,16 +16,15 @@ void Point::init(double x, double y, double Y)
 {
 	#ifdef DIRAC
 
-	P2d v(180.0, 0.0);
-	double r = 2.0*(x*x + y*y);
+	P2d v(200.0, 0.0);
+	double r = 25.0*(x*x + y*y);
 	if (r < 1.0)
 	{
+		clear();
 		double s = sin(v.x*x + v.y*y), c = cos(v.x*x + v.y*y);
 		double f = 6.0 * exp(-1.0 / (1.0 - r));
-		e0 = f*cnum(c, -s);
-		e1 = 0.0;
-		e2 = f*v.y*cnum(c, -s);
-		e3 = f*v.x*cnum(c, -s);
+		e1 = f*cnum(c, -s);
+		e3 = -f*cnum(c, -s);
 	}
 	else
 	{
@@ -72,7 +71,7 @@ void Point::init_g(double x, double y)
 {
 	g.clear();
 	double r = std::hypot(x, y);
-	switch (1)
+	switch (0)
 	{
 		case 0: // nothing
 			break;
@@ -143,12 +142,12 @@ void Point::evolve(const Point *p, const int Y)
 
 	#ifdef DIRAC //---------------------------------------
 	static constexpr cnum I(0.0, 1.0);
-	double f = dt * sqrt(g.z); // first order equation
-
-	e0 += p->e0 + f*(-D1(e3, x) + ix(D1(e3, y)) - ix(p->e0));
-	e1 += p->e1 + f*(-D1(e2, x) - ix(D1(e2, y)) - ix(p->e1));
-	e2 += p->e2 + f*(-D1(e1, x) + ix(D1(e1, y)) + ix(p->e2));
-	e3 += p->e3 + f*(-D1(e0, x) - ix(D1(e0, y)) + ix(p->e3));
+	double f = 0.3*dt * sqrt(g.z); // first order equation
+	double f2 = 0.2;
+	e0 += p->e0 + f*(-ix(D1(e3, x)) - (D1(e2, y)) - f2*ix(p->e0));
+	e1 += p->e1 + f*( ix(D1(e2, x)) + (D1(e3, y)) - f2*ix(p->e1));
+	e2 += p->e2 + f*(-ix(D1(e1, x)) - (D1(e0, y)) - f2*ix(p->e2));
+	e3 += p->e3 + f*( ix(D1(e0, x)) + (D1(e1, y)) - f2*ix(p->e3));
 
 	#else //----------------------------------------------
 
