@@ -235,6 +235,27 @@ void Graph::update() const
 			// To avoid tons of modulo operations, we add BORDER-sized
 			// borders on every side - the copying below is what buys 
 			// the simpler evolve()
+
+			#ifdef ZERO_BORDER
+			layer = new WorkLayer("prepare", &task, layer, 0, -1);
+			{
+				layer->add_unit([=]()
+				{
+					memset(ud, 0, BORDER * W * sizeof(Point));
+					memset(ud + (BORDER + h)*W, 0, BORDER * W * sizeof(Point));
+				});
+				Point *p = ud + W*BORDER;
+				for (int i = 0; i < h; i += chunk)
+				{
+					int i1 = std::min(h, i + chunk);
+					layer->add_unit([=]()
+					{
+						memset(p, 0, (i1 - i) * W * sizeof(Point));
+					});
+					p += W*chunk;
+				}
+			}
+			#else
 			{
 				Point * const d = ud0;
 				size_t ow = BORDER * sizeof(Point);
@@ -276,6 +297,7 @@ void Graph::update() const
 					p += W*chunk;
 				}
 			}
+			#endif
 			layer = new WorkLayer("evolve", &task, layer, space, 2*space+1, -space);
 			layer->set_cyclic();
 			{
@@ -301,6 +323,7 @@ void Graph::update() const
 				}
 			}
 
+			#ifndef ZERO_BORDER
 			constexpr int m = Point::MOD_OVERLAP;
 			if (m > 0)
 			{
@@ -340,6 +363,7 @@ void Graph::update() const
 					}
 				});
 			}
+			#endif
 		}
 
 		if (tz & 1) wave->U.swap(wave->U0);

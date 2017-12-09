@@ -11,6 +11,8 @@ void Point::display(unsigned char pixel[4])
 	#endif
 }
 
+static const double m = 1.0;
+
 static inline double sqr(double x) { return x*x; }
 void Point::init(double x, double y, double Y)
 {
@@ -48,7 +50,7 @@ void Point::init(double x, double y, double Y)
 	
 	#else
 	
-	P2d v(38.0, 0.0);
+	P2d v(38.0 * m, 0.0 * m);
 	double r = 2.0*(x*x + y*y);
 	if (r < 1.0)
 	{
@@ -71,7 +73,7 @@ void Point::init_g(double x, double y)
 {
 	g.clear();
 	double r = std::hypot(x, y);
-	switch (0)
+	switch (1)
 	{
 		case 0: // nothing
 			break;
@@ -161,7 +163,7 @@ void Point::evolve(const Point *p, const int Y)
 	
 	#else // Klein-Gordon
 	
-	de = p->de + dt*(LAPLACE(e)/(eps*eps) - p->e);
+	de = p->de + dt*(LAPLACE(e)/(eps*eps) - m * p->e);
 	
 	#endif
 
