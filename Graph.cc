@@ -380,7 +380,7 @@ void Graph::update() const
 			{
 				for (auto *end = p+w; p != end; ++p, data += 4)
 				{
-					p->display(data);
+					p->display(W, data);
 				}
 				p += 2 * BORDER;
 			}

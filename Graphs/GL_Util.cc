@@ -3,6 +3,14 @@
 typedef unsigned char byte;
 void hsl(double h, double s, double l, unsigned char buf[4])
 {
+	if (!defined(h))
+	{
+		*buf++ = 0;
+		*buf++ = 0;
+		*buf++ = 0;
+		*buf   = 255;
+		return;
+	}
 	if (s < 0.0) s = 0.0; else if (s > 1.0) s = 1.0;
 	if (l < 0.0) l = 0.0; else if (l > 1.0) l = 1.0;
 	l *= 255.0;

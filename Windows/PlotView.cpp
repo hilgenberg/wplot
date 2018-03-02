@@ -3,6 +3,7 @@
 #include "MainWindow.h"
 #include "CPlotApp.h"
 #include "../Graph.h"
+#include "../Point.h"
 
 #include "gl/gl.h"
 #include "gl/glu.h"
@@ -246,6 +247,21 @@ void PlotView::OnKeyDown(UINT c, UINT rep, UINT flags)
 
 		case 'q':
 			GetParentFrame()->PostMessage(WM_CLOSE);
+			break;
+
+		case 'v':
+			++Point::vis;
+			Invalidate();
+			break;
+		case 'V':
+			--Point::vis;
+			Invalidate();
+			break;
+
+		case 'a': case 'b': case 'c': case 'd':
+		case 'e': case 'f': case 'g': case 'h':
+			Point::vis = c - 'a';
+			Invalidate();
 			break;
 	}
 }

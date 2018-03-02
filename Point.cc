@@ -2,31 +2,23 @@
 #include "Graphs/GL_Util.h"
 #include "random.h"
 
-void Point::display(unsigned char pixel[4])
-{
-	#ifdef DIRAC
-	hsl(e0, pixel);
-	#else
-	hsl(e, pixel);
-	#endif
-}
-
-static const double m = 1.0;
-
 static inline double sqr(double x) { return x*x; }
+
 void Point::init(double x, double y, double Y)
 {
 	#ifdef DIRAC
 
-	P2d v(200.0, 0.0);
-	double r = 25.0*(x*x + y*y);
-	if (r < 1.0)
+	P2d v(38.0, 0.0);
+	double r = 2.0*(x*x + y*y);
+	if (r < 0.25)
 	{
 		clear();
 		double s = sin(v.x*x + v.y*y), c = cos(v.x*x + v.y*y);
-		double f = 6.0 * exp(-1.0 / (1.0 - r));
-		e1 = f*cnum(c, -s);
-		e3 = -f*cnum(c, -s);
+		double f = 6.0 * exp(-1.0 / (1.0 - 4.0*r));
+		e0 = f*cnum(c, s);
+		e1 = 0.0;
+		e2 = v.y*f*cnum(-s,c);
+		e3 = v.x*f*cnum(-s, -c);
 	}
 	else
 	{
@@ -50,12 +42,12 @@ void Point::init(double x, double y, double Y)
 	
 	#else
 	
-	P2d v(38.0 * m, 0.0 * m);
+	P2d v(38.0, 0.0);
 	double r = 2.0*(x*x + y*y);
-	if (r < 1.0)
+	if (r < 0.25)
 	{
 		double s = sin(v.x*x + v.y*y), c = cos(v.x*x + v.y*y);
-		double f = 6.0 * exp(-1.0 / (1.0 - r));
+		double f = 6.0 * exp(-1.0 / (1.0 - 4.0*r));
 		e = cnum(s, c) * f;
 		de = cnum(c, -s) * f;
 	}
@@ -73,7 +65,7 @@ void Point::init_g(double x, double y)
 {
 	g.clear();
 	double r = std::hypot(x, y);
-	switch (1)
+	switch (4)
 	{
 		case 0: // nothing
 			break;
@@ -125,37 +117,53 @@ void Point::init_g(double x, double y)
 #define dy Y
 
 // differentials, first order:
-#define D1L_(f,v) (p[0].f - p[-d##v].f) // left/lower side
-#define D1R_(f,v) (p[d##v].f - p[0].f)  // right/upper side
+#define D1L_(f,v) (P[0].f - P[-d##v].f) // left/lower side
+#define D1R_(f,v) (P[d##v].f - P[0].f)  // right/upper side
 #define D1L(f,v)  (D1L_(f,v)*(1.0-g.v))
 #define D1R(f,v)  (D1R_(f,v)*(1.0+g.v))
 #define D1(f,v)  ((D1L(f,v)+D1R(f,v))*0.5) // probably needs roots on the factors or something
 
 // second order: D2 = D1R - D1L = 
-#define D2(f,v)  ((p[-d##v].f*(1.0-g.v) - p[0].f) + (p[d##v].f*(1.0+g.v) - p[0].f))
+#define D2(f,v)  ((P[-d##v].f*(1.0-g.v) - P[0].f) + (P[d##v].f*(1.0+g.v) - P[0].f))
 #define LAPLACE(f) (D2(f,x)+D2(f,y))
 
-void Point::evolve(const Point *p, const int Y)
+#define PTL(f,v) do { double p = sp(-ix(D1L(f, v)), P->f)*dt; m += p; this[-d##v].m -= p; } while (0)
+#define PTR(f,v) do { double p = sp(-ix(D1R(f, v)), P->f)*dt; m -= p; this[ d##v].m += p; } while (0)
+
+void Point::evolve(const Point *P, const int Y)
 {
+	g = P->g; // static gravity for now
+
+	#ifdef DIRAC //---------------------------------------
+	constexpr double dt = 0.1;
+	constexpr double eps = 1.0;// / (double)w;
+	static constexpr cnum I(0.0, 1.0);
+	#if 1
+	static const cnum c03 = -I, c02 = -1.0;
+	static const cnum c12 = 0, c13 = 0.0;
+	static const cnum c21 = 0, c20 = -1.0;
+	static const cnum c30 = I, c31 = 0.0;
+	static constexpr double m0 = 1.0, m1 = 0, m2 = 0, m3 = 0;
+	#else
+	static const cnum c03 = -I, c02 = -1.0;
+	static const cnum c12 = I, c13 = 0.0;
+	static const cnum c21 = -I, c20 = -1.0;
+	static const cnum c30 = I, c31 = 1.0;
+	static constexpr double m0 = 1.0, m1 = 1.0, m2 = 1.0, m3 = 1.0;
+	#endif
+	double f = dt * g.z;
+	e0 += P->e0 + f*(c03*D1(e3, x) + c02*D1(e2, y) - m0*ix(P->e0));
+	e1 += P->e1 + f*(c12*D1(e2, x) + c13*D1(e3, y) - m1*ix(P->e1));
+	e2 += P->e2 + f*(c21*D1(e1, x) + c20*D1(e0, y) - m2*ix(P->e2));
+	e3 += P->e3 + f*(c30*D1(e0, x) + c31*D1(e1, y) - m3*ix(P->e3));
+
+	#else //----------------------------------------------
 	constexpr double dt = 0.1;
 	constexpr double eps = 1.0;// / (double)w;
 
-	g = p->g;  // static gravity for now
-
-	#ifdef DIRAC //---------------------------------------
-	static constexpr cnum I(0.0, 1.0);
-	double f = 0.3*dt * sqrt(g.z); // first order equation
-	double f2 = 0.2;
-	e0 += p->e0 + f*(-ix(D1(e3, x)) - (D1(e2, y)) - f2*ix(p->e0));
-	e1 += p->e1 + f*( ix(D1(e2, x)) + (D1(e3, y)) - f2*ix(p->e1));
-	e2 += p->e2 + f*(-ix(D1(e1, x)) - (D1(e0, y)) - f2*ix(p->e2));
-	e3 += p->e3 + f*( ix(D1(e0, x)) + (D1(e1, y)) - f2*ix(p->e3));
-
-	#else //----------------------------------------------
-
 	// start with last iteration's value (but allow
 	// neighbours to modify our e)
-	e += p->e;
+	e += P->e;
 
 	#ifdef MAXWELL
 
@@ -163,42 +171,41 @@ void Point::evolve(const Point *p, const int Y)
 	
 	#else // Klein-Gordon
 	
-	de = p->de + dt*(LAPLACE(e)/(eps*eps) - m * p->e);
+	de = P->de + dt*(LAPLACE(e)/(eps*eps) - P->e);
 	
 	#endif
 
 	cnum d = dt*de*g.z;
 
-	#if 1
 	e += d;
-	#else
-	// conserve |e| to work against rounding errors
-	double va = abs(p[ dx].e);
-	double vb = abs(p[-dx].e);
-	double vc = abs(p[ dy].e);
-	double vd = abs(p[-dy].e);
-	double v = va + vb + vc + vd;
 
-	double r0 = abs(p->e), r = abs(p->e + d);
-	double dr = r - r0;
+	#endif // DIRAC
+}
 
-	if (abs(dr) > 1e-40 && dr > v)
+int Point::vis = 0;
+
+void Point::display(const int Y, unsigned char pixel[4])
+{
+	#ifdef DIRAC
+	switch (vis % 4)
 	{
-		d *= v / dr;
-		dr = v;
+		case 0: if (!defined(e0)) memset(pixel, 42, 4); else hsl(e0, pixel); break;
+		case 1: if (!defined(e1)) memset(pixel, 42, 4); else hsl(e1, pixel); break;
+		case 2: if (!defined(e2)) memset(pixel, 42, 4); else hsl(e2, pixel); break;
+		case 3: if (!defined(e3)) memset(pixel, 42, 4); else hsl(e3, pixel); break;
 	}
-	if (v > 1e-40)
+	#else
+	switch (vis % 2)
 	{
-		dr /= v;
-		e += d;
-		this[ dx].e -= p[ dx].e * dr;
-		this[-dx].e -= p[-dx].e * dr;
-		this[ dy].e -= p[ dy].e * dr;
-		this[-dy].e -= p[-dy].e * dr;
+		case 0:
+			if (!defined(e)) memset(pixel, 42, 4); else hsl(e, pixel);
+			break;
+		case 1: // impulse
+		{
+			const Point *P = this;
+			hsl(cnum(sp(-ix(D1L(e, x)), e), sp(-ix(D1L(e, y)), e)), pixel);
+			break;
+		}
 	}
 	#endif
-	#endif // DIRAC
-
-	/*double r = abs(e);
-	if (r > 1.0) e /= r;*/
 }
