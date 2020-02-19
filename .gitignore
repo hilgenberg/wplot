@@ -2,6 +2,7 @@
 /cplot
 *.dblite
 /TODO
+/wplot
 
 *.swp
 *.cc_
@@ -11,6 +12,7 @@
 /Gallery/
 /User Gallery/
 
+/__pycache__/
 /gch.pyc
 *.gch
 

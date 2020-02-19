@@ -2,7 +2,7 @@
 #include "cnum.h"
 #include "Graphs/Vector.h"
 
-#define ZERO_BORDER
+//#define ZERO_BORDER
 //#define DIRAC
 //#define MAXWELL
 

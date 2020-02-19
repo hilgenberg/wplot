@@ -1,12 +1,9 @@
 #include "Graph.h"
-#include "Graphs/GL_Context.h"
 #include "Utility/ThreadMap.h"
-#include "Graphs/GL_RM.h"
+#include "Graphs/GL_Util.h"
 #include "Point.h"
 #include <GL/gl.h>
 #include <thread>
-
-IMPLEMENT_DYNCREATE(Graph, CDocument)
 
 struct Wave
 {
@@ -39,7 +36,7 @@ void Graph::viewport(int w_, int h_)
 	glViewport(0, 0, w, h);
 }
 
-void Graph::draw(GL_RM &rm) const
+void Graph::draw() const
 {
 	try
 	{
@@ -61,82 +58,17 @@ void Graph::draw(GL_RM &rm) const
 	}
 	if (im.empty()) return;
 
-	rm.start_drawing();
-	try {
-		GL_CHECK;
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(0.0, 1.0, 0.0, 1.0, -1.0, 1.0);
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
 
-		glDisable(GL_DITHER);
-		glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-		glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-		glHint(GL_POLYGON_SMOOTH_HINT, GL_NICEST);
-		glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-		glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
-		glEnable(GL_COLOR_MATERIAL);
-
-		GL_CHECK;
-
-		{
-			GLboolean b;
-			glGetBooleanv(GL_DOUBLEBUFFER, &b);
-			GLenum buf = b ? GL_BACK : GL_FRONT;
-			glDrawBuffer(buf);
-			glReadBuffer(buf);
-		}
-
-		glMatrixMode(GL_PROJECTION);
-		glLoadIdentity();
-		glOrtho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
-
-		GL_CHECK;
-
-		glClearColor(0.0, 0.0, 0.0, 0.0);
-		glClearDepth(1.0);
-		glDepthMask(GL_TRUE);
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glDisable(GL_LINE_SMOOTH);
-		glDisable(GL_POINT_SMOOTH);
-		glDisable(GL_DEPTH_TEST);
-
-
-		//------------------------------------------------------------------------------------------------------------------
-		// setup light and textures
-		//------------------------------------------------------------------------------------------------------------------
-
-		glShadeModel(GL_SMOOTH);
-		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-
-		glActiveTexture(GL_TEXTURE0);
-		glClientActiveTexture(GL_TEXTURE0);
-		glEnable(GL_TEXTURE_2D);
-
-		rm.upload_texture(im);
-		rm.setup(true, false, false);
-		glDisable(GL_BLEND);
-		glDepthMask(GL_TRUE);
-
-		//------------------------------------------------------------------------------------------------------------------
-		// draw triangles
-		//------------------------------------------------------------------------------------------------------------------
-		glBegin(GL_QUADS);
-		glNormal3f(0.0f, 0.0f, 1.0f);
-		glTexCoord2f(0.0f, 0.0f); glVertex3f(-1.0f, -1.0f, 0.0f);
-		glTexCoord2f(0.0f, 1.0f); glVertex3f(-1.0f,  1.0f, 0.0f);
-		glTexCoord2f(1.0f, 1.0f); glVertex3f( 1.0f,  1.0f, 0.0f);
-		glTexCoord2f(1.0f, 0.0f); glVertex3f( 1.0f, -1.0f, 0.0f);
-		glEnd();
-
-		glDisable(GL_TEXTURE_2D);
-
-		GL_CHECK;
-	}
-	catch (...)
-	{
-		rm.end_drawing();
-		throw;
-	}
-	rm.end_drawing();
+	GL_CHECK;
+	glPixelZoom((GLfloat)w / im.w(), (GLfloat)h / im.h());
+	glRasterPos2i(0, 0);
+	glDrawPixels(im.w(), im.h(), GL_RGBA, GL_UNSIGNED_BYTE, im.data().data());
+	glPixelZoom(1, 1);
 	GL_CHECK;
 }
 

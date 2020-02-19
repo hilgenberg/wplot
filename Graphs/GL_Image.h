@@ -1,8 +1,7 @@
 #pragma once
-#include "GL_RM.h"
 #include <vector>
 
-struct GL_Image : public GL_Resource
+struct GL_Image
 {
 	GL_Image() : _w(0), _h(0){ }
 	GL_Image(const GL_Image &i) = delete;
@@ -19,7 +18,6 @@ struct GL_Image : public GL_Resource
 	{
 		_w = w; _h = h;
 		_data.resize(_w * _h * 4);
-		modify(); // even if w==w_ and h==h_ !
 		return _data.data();
 	}
 	

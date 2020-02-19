@@ -1,38 +1,21 @@
 #pragma once
+#include <GL/gl.h>
+#include <cassert>
 #include "../cnum.h"
 
 void hsl(double h, double s, double l, unsigned char buf[4]);
 void hsl(const cnum &z, unsigned char buf[4]);
 
-#if 0
-#include "../Geometry/Vector.h"
-#include <GL/gl.h>
+#ifdef DEBUG
+#include <GL/glu.h>
+#include <iostream>
 
-void draw_arrow(const P3d &p, const P3d &u, double max_tip_length, const Axis &axis); // arrow from p to p+u
-void draw_arrow(const P2d &p, const P2d &u, double max_tip_length, const Axis &axis);
+#define GL_CHECK do{\
+	GLenum err = glGetError();\
+	if (err) std::cerr << "glERROR: " << gluErrorString(err) << std::endl;\
+	assert(err == GL_NO_ERROR);\
+}while(0)
 
-void draw_arrow3d(const P3f &p, const P3f &u, float max_tip_length); // arrow from p to p+u
-void draw_arrow2d(const P3f &p, const P3f &u, float max_tip_length);
-
-
-inline void vertex(const P3d &p, const Axis &axis)
-{
-	P3f q;
-	axis.map(p, q);
-	glVertex3fv(q);
-}
-inline void vertex(double x, double y, double z, const Axis &axis)
-{
-	P3f q;
-	axis.map(P3d(x,y,z), q);
-	glVertex3fv(q);
-}
-
-inline void vertex2d(const P2d &p, const Axis &axis)
-{
-	P3f q;
-	axis.map(P3d(p.x, p.y, 0.0), q);
-	glVertex3fv(q);
-}
-
+#else
+#define GL_CHECK
 #endif

@@ -5,7 +5,7 @@
 #include <string>
 #include <functional>
 #include <atomic>
-#include "../../Utility/Mutex.h"
+#include "Mutex.h"
 
 class WorkLayer;
 class Task;

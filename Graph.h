@@ -1,8 +1,7 @@
 #pragma once
 #include "Graphs/GL_Image.h"
-class GL_RM;
 
-class Graph : public CDocument
+class Graph
 {
 public:
 	Graph();
@@ -16,7 +15,7 @@ public:
 	int  screen_w() const { return w; }
 	int  screen_h() const { return h; }
 
-	void draw(GL_RM &rm) const;
+	void draw() const;
 
 	int  zoom() const { return qz; }
 	void zoom(int z) { qz = z; if (qz < 1) qz = 1; }
@@ -33,6 +32,4 @@ private:
 	mutable GL_Image im;
 	mutable struct Wave *wave;
 	mutable size_t frame;
-
-	DECLARE_DYNCREATE(Graph)
 };
