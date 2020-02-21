@@ -1,5 +1,6 @@
 #pragma once
 #include "Graphs/GL_Image.h"
+class Recorder;
 
 class Graph
 {
@@ -10,6 +11,9 @@ public:
 	bool animating() const { return m_animating; }
 	void animate(bool f) { m_animating = f; }
 	void reset() { frame = (size_t)-1; } // start animation at t=0 again
+
+	bool recording() const { return rec; }
+	void record(bool f);
 
 	void viewport(int w, int h);
 	int  screen_w() const { return w; }
@@ -29,6 +33,7 @@ private:
 	int  qz; // quality reduction factor: generated image is w/qz x h/qz
 	int  tz; // speedup factor: compute tz iterations per frame
 	int  w, h;
+	Recorder *rec;
 	mutable GL_Image im;
 	mutable struct Wave *wave;
 	mutable size_t frame;

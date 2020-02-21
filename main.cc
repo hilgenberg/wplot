@@ -22,7 +22,12 @@ static void key(unsigned char c, int x, int y)
 	{
 		case 'q':
 		case 'Q':
-		case 27: exit(0);
+		case 27: g.record(false); exit(0);
+
+		case 'r':
+			g.record(!g.recording());
+			g.animate(g.recording());
+			break;
 
 		case ' ':
 			g.animate(!g.animating());
@@ -86,7 +91,7 @@ static void idle()
 	t0 = t;
 	#endif
 
-	glutPostRedisplay();
+	if (graph.animating()) glutPostRedisplay();
 }
 
 static void visible(int vis)
@@ -96,7 +101,7 @@ static void visible(int vis)
 
 int main(int argc, char *argv[])
 {
-	graph.animate(true);
+	//graph.animate(true);
 	glutInitWindowSize(600, 600);
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);

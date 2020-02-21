@@ -1,6 +1,7 @@
 #include "Graph.h"
 #include "Utility/ThreadMap.h"
 #include "Graphs/GL_Util.h"
+#include "Utility/Recorder.h"
 #include "Point.h"
 #include <GL/gl.h>
 #include <thread>
@@ -23,11 +24,26 @@ Graph::Graph()
 , qz(2), tz(1)
 , frame((size_t)-1)
 , wave(new Wave)
+, rec(NULL)
 { }
 
 Graph::~Graph()
 {
 	delete wave;
+	delete rec;
+}
+
+void Graph::record(bool f)
+{
+	if (!f && rec)
+	{
+		rec->finish();
+		delete rec; rec = NULL;
+	}
+	else if (f && !rec)
+	{
+		rec = new Recorder("wplot.mpg");
+	}
 }
 
 void Graph::viewport(int w_, int h_)
@@ -70,6 +86,8 @@ void Graph::draw() const
 	glDrawPixels(im.w(), im.h(), GL_RGBA, GL_UNSIGNED_BYTE, im.data().data());
 	glPixelZoom(1, 1);
 	GL_CHECK;
+
+	if (rec) rec->add(im);
 }
 
 //----------------------------------------------------------------------------------------------------------------------

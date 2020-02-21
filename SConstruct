@@ -54,7 +54,7 @@ fdbg = '-Og -DDEBUG -D_DEBUG -g'
 env.Append(CCFLAGS=Split(frel if release else fdbg))
 
 # libs
-libs = 'glut GL GLU GLEW pthread m'
+libs = 'glut GL GLU GLEW pthread m avcodec avutil avformat swscale'
 env.Append(LIBS=libs.split());
 env.ParseConfig('pkg-config --cflags --libs pangocairo')
 

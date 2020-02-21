@@ -29,5 +29,5 @@ struct GL_Image
 	
 private:
 	unsigned                   _w, _h;   // width and height
-	std::vector<unsigned char> _data;    // rgba, size = 4*w*h or empty for patterns
+	std::vector<unsigned char> _data;    // rgba, size = 4*w*h
 };

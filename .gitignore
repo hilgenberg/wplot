@@ -8,6 +8,7 @@
 *.cc_
 *.h_
 *~
+*.mpg
 
 /Gallery/
 /User Gallery/
@@ -63,3 +64,5 @@ ipch/
 *.vsp
 *.vspx
 *.sap
+
+.vscode/
