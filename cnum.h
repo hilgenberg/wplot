@@ -29,20 +29,17 @@ inline double sp(const cnum &z, const cnum &w)
 inline cnum sqrt_(double z)
 {
 	if (z >= 0.0)
-	{
 		return ::sqrt(z);
-	}
 	else
-	{
 		return cnum(0.0, ::sqrt(-z));
-	}
 }
 inline cnum ix(const cnum &z) { return cnum(-z.imag(), z.real()); } // z * i
 inline cnum iu(const cnum &z) { return cnum(z.imag(), -z.real()); } // z / i
+inline constexpr cnum operator-(const cnum &z) { return cnum(-z.real(), -z.imag()); }
 
 /// Zero test with EPSILON precision
-inline bool     isz(const cnum &z){ return fabs(z.real()) < EPSILON && fabs(z.imag()) < EPSILON; }
-inline bool     isz(double x){ return fabs(x) < EPSILON; }
+inline bool isz(const cnum &z){ return fabs(z.real()) < EPSILON && fabs(z.imag()) < EPSILON; }
+inline bool isz(double x){ return fabs(x) < EPSILON; }
 
 /// Unit test with EPSILON precision
 inline bool is_one(const cnum &z){ return fabs(z.real()-1.0) < EPSILON && fabs(z.imag()) < EPSILON; }

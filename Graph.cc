@@ -42,7 +42,7 @@ void Graph::record(bool f)
 	}
 	else if (f && !rec)
 	{
-		rec = new Recorder("wplot.mpg");
+		rec = new Recorder;
 	}
 }
 
@@ -110,6 +110,7 @@ void Graph::update() const
 	const int W = w + 2 * BORDER;
 	const int chunk = std::max(1, h / (2*nthreads));
 	const int space = (BORDER + chunk - 1) / chunk;
+	Point::Y = W;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// (2) calculation
@@ -262,7 +263,7 @@ void Graph::update() const
 						{
 							for (auto *end = p + w; p != end; ++p, ++p0)
 							{
-								p->evolve(p0, W);
+								p->evolve(p0);
 							}
 							p += 2 * BORDER;
 							p0 += 2 * BORDER;
@@ -330,7 +331,7 @@ void Graph::update() const
 			{
 				for (auto *end = p+w; p != end; ++p, data += 4)
 				{
-					p->display(W, data);
+					p->display(data);
 				}
 				p += 2 * BORDER;
 			}

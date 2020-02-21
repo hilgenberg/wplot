@@ -106,7 +106,7 @@ int main(int argc, char *argv[])
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE);
 
-	glutCreateWindow("WPlot");
+	glutCreateWindow("wplot");
 	glDisable(GL_DITHER);
 	glShadeModel(GL_FLAT);
 

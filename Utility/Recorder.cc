@@ -1,5 +1,7 @@
 #include "Recorder.h"
 #include "../Graphs/GL_Image.h"
+#include "../Point.h"
+#include <filesystem>
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -10,9 +12,10 @@ extern "C" {
 
 using std::cerr;
 using std::endl;
+typedef std::string str;
 
-Recorder::Recorder(const std::string &filename)
-: i(-1), filename(filename), f(NULL)
+Recorder::Recorder()
+: i(-1), f(NULL)
 , codec(NULL), ctx(NULL), pkt(NULL), frame(NULL)
 {}
 
@@ -134,6 +137,21 @@ void Recorder::add(const GL_Image &im)
 			av_packet_free(&pkt); pkt = NULL;
 			codec = NULL;
 			return;
+		}
+
+		#if EQUATION==DIRAC
+		str f1 = "wp_dirac";
+		#elif EQUATION==MAXWELL
+		str f1 = "wp_maxwell";
+		#elif EQUATION==KLEINGORDON
+		str f1 = "wp_kgordon";
+		#endif
+		int j = 0;
+		str filename = f1 + ".mpg";
+		while (std::filesystem::exists(filename))
+		{
+			std::ostringstream os; os << f1 << "_" << ++j << ".mpg";
+			filename = os.str();
 		}
 
 		f = fopen(filename.c_str(), "wb");
